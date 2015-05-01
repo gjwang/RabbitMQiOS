@@ -21,6 +21,7 @@
 #import <CoreLocation/CoreLocation.h>
 
 #import "JSQMessages.h"
+#import "amqp_tcp_socket.h"
 
 /**
  *  This is for demo/testing purposes only. 
@@ -52,10 +53,19 @@ static NSString * const kJSQDemoAvatarIdWoz = @"309-41802-93823";
 
 @property (strong, nonatomic) NSDictionary *users;
 
+@property (strong, nonatomic) NSString *exchange;
+@property (strong, nonatomic) NSString *routingkey;
+@property (readwrite, nonatomic) amqp_connection_state_t conn;
+@property (readwrite, nonatomic) amqp_connection_state_t recvConn;
+
 - (void)addPhotoMediaMessage;
 
 - (void)addLocationMediaMessageCompletion:(JSQLocationMediaItemCompletionBlock)completion;
 
 - (void)addVideoMediaMessage;
+
+- (void)sendMessage: (NSString *)msg;
+- (void)connRecvRabbitMq;
+- (NSString *)consumeMsg;
 
 @end

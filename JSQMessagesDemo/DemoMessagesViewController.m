@@ -17,7 +17,7 @@
 //
 
 #import "DemoMessagesViewController.h"
-
+#import "amqp_tcp_socket.h"
 
 @implementation DemoMessagesViewController
 
@@ -49,6 +49,7 @@
      *  Load up our fake data for the demo
      */
     self.demoData = [[DemoModelData alloc] init];
+    [self receiveMessageFromRabbit];
     
     
     /**
@@ -113,6 +114,82 @@
 
 
 #pragma mark - Actions
+
+- (void)receiveMessageFromRabbit
+{
+    dispatch_queue_t connRecvQueue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
+    dispatch_async(connRecvQueue, ^(void){
+        while (true) {
+            NSLog(@"connnecting...");
+            [self.demoData connRecvRabbitMq];
+            
+            while (true) {
+                NSLog(@"recving msg...");
+                //TODO:
+                
+                //if(connecting)
+                NSString *recvMsg = [self.demoData consumeMsg];
+            
+                dispatch_async(dispatch_get_main_queue(), ^(void){
+                    [self updateUI: recvMsg];
+            
+                });
+                
+                //if (connecting == false) {
+                //    break;
+                //}
+            }
+            
+            NSLog(@"network is down!!!");
+            
+            NSLog(@"try to connect 1sec late");
+            sleep(1);
+        }
+        
+    });
+    
+}
+
+- (void)updateUI:(NSString *)recvMsg
+{
+    NSLog(@"updateUI");
+    
+    /**
+     *  Show the typing indicator to be shown
+     */
+    self.showTypingIndicator = !self.showTypingIndicator;
+    
+    /**
+     *  Scroll to actually view the indicator
+     */
+    [self scrollToBottomAnimated:YES];
+    
+    /**
+     *  Allow typing indicator to show
+     */
+    NSMutableArray *userIds = [[self.demoData.users allKeys] mutableCopy];
+    [userIds removeObject:self.senderId];
+    NSString *randomUserId = userIds[arc4random_uniform((int)[userIds count])];
+        
+    JSQMessage *newMessage = nil;
+    newMessage = [JSQMessage messageWithSenderId:randomUserId
+                                     displayName:self.demoData.users[randomUserId]
+                                            text:recvMsg];
+        
+        
+    /**
+    *  Upon receiving a message, you should:
+    *
+    *  1. Play sound (optional)
+    *  2. Add new id<JSQMessageData> object to your data source
+    *  3. Call `finishReceivingMessage`
+    */
+    [JSQSystemSoundPlayer jsq_playMessageReceivedSound];
+    [self.demoData.messages addObject:newMessage];
+    [self finishReceivingMessageAnimated:YES];
+        
+    NSLog(@"recv sendername=%@, senderid=%@, msg=%@", newMessage.senderDisplayName, newMessage.senderId, newMessage.text);
+}
 
 - (void)receiveMessagePressed:(UIBarButtonItem *)sender
 {
@@ -300,7 +377,72 @@
     
     [self.demoData.messages addObject:message];
     
-    [self finishSendingMessageAnimated:YES];
+    NSLog(@"sending sendername=%@, sendid=%@, msg=%@", message.senderDisplayName, message.senderId, message.text);
+    //sleep(1);
+    NSLog(@"didPressSendButton");
+    
+    /*
+    char const *hostname = "conntheworld.com";
+    int port = 5672, status;
+    //char const *exchange = "amq.direct";
+    char const *exchange = "";
+    char const *routingkey = "hello";
+    //char const *messagebody = "hello, world!";
+    char const *messagebody = [message.text UTF8String];
+    amqp_socket_t *socket = NULL;
+    amqp_connection_state_t conn;
+    
+    conn = amqp_new_connection();
+    socket = amqp_tcp_socket_new(conn);
+    if (!socket) {
+        NSLog(@"creating TCP socket failed");
+    }
+
+    status = amqp_socket_open(socket, hostname, port);
+    if (status) {
+        NSLog(@"opening TCP socket failed");
+    }
+    
+    char const *username = "rabbit";
+    char const *password = "rb.123qwe";
+    
+    amqp_login(conn, "/", 0, 131072, 0, AMQP_SASL_METHOD_PLAIN, username, password);
+    
+    amqp_channel_open(conn, 1);
+    amqp_get_rpc_reply(conn);
+
+    
+    {
+        amqp_basic_properties_t props;
+        props._flags = AMQP_BASIC_CONTENT_TYPE_FLAG | AMQP_BASIC_DELIVERY_MODE_FLAG;
+        props.content_type = amqp_cstring_bytes("text/plain");
+        props.delivery_mode = 2; // persistent delivery mode
+        amqp_basic_publish(conn,
+                           1,
+                           amqp_cstring_bytes(exchange),
+                           amqp_cstring_bytes(routingkey),
+                           0,
+                           0,
+                           &props,
+                           amqp_cstring_bytes(messagebody));
+        
+    }
+    
+    amqp_channel_close(conn, 1, AMQP_REPLY_SUCCESS);
+    amqp_connection_close(conn, AMQP_REPLY_SUCCESS);
+    amqp_destroy_connection(conn);
+*/
+    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^(void){
+        
+        NSLog(@"sending msg...");
+        [self.demoData sendMessage: message.text];
+        NSLog(@"send msg OK");
+        
+        dispatch_async(dispatch_get_main_queue(), ^(void){
+            NSLog(@"update send msg UI");
+            [self finishSendingMessageAnimated:YES];
+        });
+    });
 }
 
 - (void)didPressAccessoryButton:(UIButton *)sender
