@@ -121,7 +121,7 @@
     dispatch_async(connRecvQueue, ^(void){
         while (true) {
             NSLog(@"connnecting...");
-            [self.demoData connRecvRabbitMq];
+            //[self.demoData connRecvRabbitMq];
             
             while (true) {
                 NSLog(@"recving msg...");
@@ -378,64 +378,13 @@
     [self.demoData.messages addObject:message];
     
     NSLog(@"sending sendername=%@, sendid=%@, msg=%@", message.senderDisplayName, message.senderId, message.text);
-    //sleep(1);
     NSLog(@"didPressSendButton");
     
-    /*
-    char const *hostname = "conntheworld.com";
-    int port = 5672, status;
-    //char const *exchange = "amq.direct";
-    char const *exchange = "";
-    char const *routingkey = "hello";
-    //char const *messagebody = "hello, world!";
-    char const *messagebody = [message.text UTF8String];
-    amqp_socket_t *socket = NULL;
-    amqp_connection_state_t conn;
-    
-    conn = amqp_new_connection();
-    socket = amqp_tcp_socket_new(conn);
-    if (!socket) {
-        NSLog(@"creating TCP socket failed");
-    }
-
-    status = amqp_socket_open(socket, hostname, port);
-    if (status) {
-        NSLog(@"opening TCP socket failed");
-    }
-    
-    char const *username = "rabbit";
-    char const *password = "rb.123qwe";
-    
-    amqp_login(conn, "/", 0, 131072, 0, AMQP_SASL_METHOD_PLAIN, username, password);
-    
-    amqp_channel_open(conn, 1);
-    amqp_get_rpc_reply(conn);
-
-    
-    {
-        amqp_basic_properties_t props;
-        props._flags = AMQP_BASIC_CONTENT_TYPE_FLAG | AMQP_BASIC_DELIVERY_MODE_FLAG;
-        props.content_type = amqp_cstring_bytes("text/plain");
-        props.delivery_mode = 2; // persistent delivery mode
-        amqp_basic_publish(conn,
-                           1,
-                           amqp_cstring_bytes(exchange),
-                           amqp_cstring_bytes(routingkey),
-                           0,
-                           0,
-                           &props,
-                           amqp_cstring_bytes(messagebody));
-        
-    }
-    
-    amqp_channel_close(conn, 1, AMQP_REPLY_SUCCESS);
-    amqp_connection_close(conn, AMQP_REPLY_SUCCESS);
-    amqp_destroy_connection(conn);
-*/
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^(void){
         
         NSLog(@"sending msg...");
-        [self.demoData sendMessage: message.text];
+        [self.demoData sendMessage: message];
+        
         NSLog(@"send msg OK");
         
         dispatch_async(dispatch_get_main_queue(), ^(void){

@@ -53,10 +53,9 @@ static NSString * const kJSQDemoAvatarIdWoz = @"309-41802-93823";
 
 @property (strong, nonatomic) NSDictionary *users;
 
-@property (strong, nonatomic) NSString *exchange;
-@property (strong, nonatomic) NSString *routingkey;
+//@property (strong, nonatomic) NSString *exchange;
+//@property (strong, nonatomic) NSString *routingkey;
 @property (readwrite, nonatomic) amqp_connection_state_t conn;
-@property (readwrite, nonatomic) amqp_connection_state_t recvConn;
 
 - (void)addPhotoMediaMessage;
 
@@ -64,8 +63,7 @@ static NSString * const kJSQDemoAvatarIdWoz = @"309-41802-93823";
 
 - (void)addVideoMediaMessage;
 
-- (void)sendMessage: (NSString *)msg;
-- (void)connRecvRabbitMq;
+- (void)sendMessage: (JSQMessage *)msg;
 - (NSString *)consumeMsg;
 
 @end
