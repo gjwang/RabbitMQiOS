@@ -39,7 +39,10 @@ static NSString * const kJSQDemoAvatarIdCook = @"468-768355-23123";
 static NSString * const kJSQDemoAvatarIdJobs = @"707-8956784-57";
 static NSString * const kJSQDemoAvatarIdWoz = @"309-41802-93823";
 
-
+static char * const rabbit_hostname = "localhost";
+static char * const login_rabbit_username = "test";
+static char * const login_rabbit_password = "test";
+static int    const rabbit_port = 5672;
 
 @interface DemoModelData : NSObject
 
@@ -53,9 +56,11 @@ static NSString * const kJSQDemoAvatarIdWoz = @"309-41802-93823";
 
 @property (strong, nonatomic) NSDictionary *users;
 
+@property (readwrite, atomic) BOOL isNetworkReachable;
+@property (readwrite, atomic) BOOL isLoginSuccess;
 //@property (strong, nonatomic) NSString *exchange;
 //@property (strong, nonatomic) NSString *routingkey;
-@property (readwrite, nonatomic) amqp_connection_state_t conn;
+@property (readwrite, atomic) amqp_connection_state_t conn;
 
 - (void)addPhotoMediaMessage;
 

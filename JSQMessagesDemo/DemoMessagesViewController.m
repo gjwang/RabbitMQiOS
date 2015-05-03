@@ -119,31 +119,23 @@
 {
     dispatch_queue_t connRecvQueue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
     dispatch_async(connRecvQueue, ^(void){
+        //TODO: use msg recv callback instead
         while (true) {
-            NSLog(@"connnecting...");
-            //[self.demoData connRecvRabbitMq];
+            //NSLog(@"recving msg...");
+            //TODO:
             
-            while (true) {
-                NSLog(@"recving msg...");
-                //TODO:
-                
-                //if(connecting)
-                NSString *recvMsg = [self.demoData consumeMsg];
+            //if(connecting)
+            NSString *recvMsg = [self.demoData consumeMsg];
             
+            if (recvMsg != nil) {
                 dispatch_async(dispatch_get_main_queue(), ^(void){
                     [self updateUI: recvMsg];
-            
+        
                 });
-                
-                //if (connecting == false) {
-                //    break;
-                //}
+            }else{
+                //NSLog(@"recv msg=nil, error!");
+                sleep(3);
             }
-            
-            NSLog(@"network is down!!!");
-            
-            NSLog(@"try to connect 1sec late");
-            sleep(1);
         }
         
     });
@@ -368,6 +360,17 @@
      *  2. Add new id<JSQMessageData> object to your data source
      *  3. Call `finishSendingMessage`
      */
+    
+    /* by gjwang
+     * 1. store msg in a queue
+     * 2. indicating sending msg status
+     * 2. async send msg
+     * 3. if sending msg OK, update msg status to finished, play sound(optional),
+     *    delete from sending queue
+     * 4, if sending msg failed, retry a few seconds late, if OK, go to step 3,
+     *    if after retry a few times, update msg status to failed, delete from sending queue,
+     *    store into failed queue, user can re-send it again by mannual.
+     */
     [JSQSystemSoundPlayer jsq_playMessageSentSound];
     
     JSQMessage *message = [[JSQMessage alloc] initWithSenderId:senderId
@@ -384,8 +387,6 @@
         
         NSLog(@"sending msg...");
         [self.demoData sendMessage: message];
-        
-        NSLog(@"send msg OK");
         
         dispatch_async(dispatch_get_main_queue(), ^(void){
             NSLog(@"update send msg UI");
