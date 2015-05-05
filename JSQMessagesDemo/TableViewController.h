@@ -20,9 +20,11 @@
 #import <UIKit/UIKit.h>
 
 #import "DemoMessagesViewController.h"
+#import "NetworkManager.h"
 
 @interface TableViewController : UITableViewController <JSQDemoViewControllerDelegate>
 
 - (IBAction)unwindSegue:(UIStoryboardSegue *)sender;
 
+@property (strong, nonatomic) NetworkManager *networkManager;
 @end

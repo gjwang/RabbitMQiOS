@@ -26,6 +26,11 @@
 {
     [super viewDidLoad];
     self.title = @"JSQMessagesViewController";
+    
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        self.networkManager = [[NetworkManager alloc] init];
+    });
 }
 
 - (void)viewWillAppear:(BOOL)animated

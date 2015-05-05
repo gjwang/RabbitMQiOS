@@ -49,7 +49,7 @@
      *  Load up our fake data for the demo
      */
     self.demoData = [[DemoModelData alloc] init];
-    [self receiveMessageFromRabbit];
+    [self registerRecvMsgObserver];
     
     
     /**
@@ -101,7 +101,11 @@
     self.collectionView.collectionViewLayout.springinessEnabled = [NSUserDefaults springinessSetting];
 }
 
-
+- (void)viewWillDisappear:(BOOL)animated
+{
+    NSLog(@"viewWillDisappear: remove revcMsgObserver");
+    [_recvMsgNotificationCenter removeObserver: _recvMsgObserver];
+}
 
 #pragma mark - Testing
 
@@ -113,33 +117,32 @@
 }
 
 
-#pragma mark - Actions
-
-- (void)receiveMessageFromRabbit
-{
-    dispatch_queue_t connRecvQueue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
-    dispatch_async(connRecvQueue, ^(void){
-        //TODO: use msg recv callback instead
-        while (true) {
-            //NSLog(@"recving msg...");
-            //TODO:
-            
-            //if(connecting)
-            NSString *recvMsg = [self.demoData consumeMsg];
-            
-            if (recvMsg != nil) {
-                dispatch_async(dispatch_get_main_queue(), ^(void){
-                    [self updateUI: recvMsg];
-        
-                });
-            }else{
-                //NSLog(@"recv msg=nil, error!");
-                sleep(3);
-            }
-        }
-        
-    });
+#pragma mark - Process Msg arrived notification
+extern NSString * const RecvMsgNotification;
+- (void) registerRecvMsgObserver{
+    NSLog(@"Register recvMsg Notification = %@", RecvMsgNotification);
+    _recvMsgNotificationCenter = [NSNotificationCenter defaultCenter];
+    NSOperationQueue *mainQueue = [NSOperationQueue mainQueue];
     
+    __weak typeof(self) weakSelf = self;
+    _recvMsgObserver = [_recvMsgNotificationCenter addObserverForName:RecvMsgNotification
+                                             object:nil
+                                              queue:mainQueue
+                                         usingBlock:^(NSNotification *note) {
+                                             //NSLog(@"recv Msg notification=%@", note.name);
+                                             NSLog(@"recv msg=%@", note.userInfo[@"RecvMsg"]);
+                                             
+                                             [weakSelf updateUI:note.userInfo[@"RecvMsg"]];
+                                         }
+                       ];
+    
+    
+}
+
+- (void)processRecvMsg:(NSString *)recvRawMsg
+{
+    //process
+    //[self updateUI:msg];
 }
 
 - (void)updateUI:(NSString *)recvMsg
@@ -183,6 +186,7 @@
     NSLog(@"recv sendername=%@, senderid=%@, msg=%@", newMessage.senderDisplayName, newMessage.senderId, newMessage.text);
 }
 
+#pragma mark - Actions
 - (void)receiveMessagePressed:(UIBarButtonItem *)sender
 {
     /**
@@ -386,7 +390,8 @@
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^(void){
         
         NSLog(@"sending msg...");
-        [self.demoData sendMessage: message];
+        //Fire a Msg?
+        //[self. sendMessage: message];
         
         dispatch_async(dispatch_get_main_queue(), ^(void){
             NSLog(@"update send msg UI");

@@ -41,6 +41,9 @@
 
 @property (strong, nonatomic) DemoModelData *demoData;
 
+@property (strong, nonatomic) NSNotificationCenter *recvMsgNotificationCenter;
+@property (strong, nonatomic) id recvMsgObserver;
+
 - (void)receiveMessagePressed:(UIBarButtonItem *)sender;
 
 - (void)closePressed:(UIBarButtonItem *)sender;

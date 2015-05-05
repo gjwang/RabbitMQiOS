@@ -39,11 +39,6 @@ static NSString * const kJSQDemoAvatarIdCook = @"468-768355-23123";
 static NSString * const kJSQDemoAvatarIdJobs = @"707-8956784-57";
 static NSString * const kJSQDemoAvatarIdWoz = @"309-41802-93823";
 
-static char * const rabbit_hostname = "localhost";
-static char * const login_rabbit_username = "test";
-static char * const login_rabbit_password = "test";
-static int    const rabbit_port = 5672;
-
 @interface DemoModelData : NSObject
 
 @property (strong, nonatomic) NSMutableArray *messages;
@@ -67,8 +62,4 @@ static int    const rabbit_port = 5672;
 - (void)addLocationMediaMessageCompletion:(JSQLocationMediaItemCompletionBlock)completion;
 
 - (void)addVideoMediaMessage;
-
-- (void)sendMessage: (JSQMessage *)msg;
-- (NSString *)consumeMsg;
-
 @end
