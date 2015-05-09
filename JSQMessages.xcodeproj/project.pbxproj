@@ -106,6 +106,7 @@
 		88C00A521A44D4E500B004B3 /* JSQVideoMediaItemTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 88C00A511A44D4E500B004B3 /* JSQVideoMediaItemTests.m */; };
 		88C4583019F5F7A0008FD427 /* JSQMessagesMediaViewBubbleImageMasker.m in Sources */ = {isa = PBXBuildFile; fileRef = 88C4582F19F5F7A0008FD427 /* JSQMessagesMediaViewBubbleImageMasker.m */; };
 		94A4FA20C2FBD0D62614D5A8 /* libPods.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 97E6750B77E8A7042BA0754B /* libPods.a */; };
+		A33547D91AFC74B70045D262 /* RBConnection.m in Sources */ = {isa = PBXBuildFile; fileRef = A33547D81AFC74B70045D262 /* RBConnection.m */; };
 		A38F63DB1AF4B7EF006334FC /* Reachability.m in Sources */ = {isa = PBXBuildFile; fileRef = A38F63DA1AF4B7EF006334FC /* Reachability.m */; };
 		A38F63E01AF8D5EF006334FC /* NetworkManager.m in Sources */ = {isa = PBXBuildFile; fileRef = A38F63DF1AF8D5EF006334FC /* NetworkManager.m */; };
 		DE0A831F1AF09F5B0079F83B /* librabbitmq.a in Frameworks */ = {isa = PBXBuildFile; fileRef = DE0A831E1AF09F5B0079F83B /* librabbitmq.a */; settings = {ATTRIBUTES = (Required, ); }; };
@@ -269,10 +270,12 @@
 		88C4582E19F5F7A0008FD427 /* JSQMessagesMediaViewBubbleImageMasker.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = JSQMessagesMediaViewBubbleImageMasker.h; sourceTree = "<group>"; };
 		88C4582F19F5F7A0008FD427 /* JSQMessagesMediaViewBubbleImageMasker.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = JSQMessagesMediaViewBubbleImageMasker.m; sourceTree = "<group>"; };
 		97E6750B77E8A7042BA0754B /* libPods.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libPods.a; sourceTree = BUILT_PRODUCTS_DIR; };
+		A33547D71AFC74B70045D262 /* RBConnection.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RBConnection.h; path = JSQMessagesDemo/RBConnection.h; sourceTree = "<group>"; };
+		A33547D81AFC74B70045D262 /* RBConnection.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = RBConnection.m; path = JSQMessagesDemo/RBConnection.m; sourceTree = "<group>"; };
 		A38F63DA1AF4B7EF006334FC /* Reachability.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Reachability.m; sourceTree = "<group>"; };
 		A38F63DC1AF4B806006334FC /* Reachability.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Reachability.h; sourceTree = "<group>"; };
-		A38F63DF1AF8D5EF006334FC /* NetworkManager.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = NetworkManager.m; sourceTree = "<group>"; };
-		A38F63E11AF8D644006334FC /* NetworkManager.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = NetworkManager.h; sourceTree = "<group>"; };
+		A38F63DF1AF8D5EF006334FC /* NetworkManager.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = NetworkManager.m; path = JSQMessagesDemo/NetworkManager.m; sourceTree = "<group>"; };
+		A38F63E11AF8D644006334FC /* NetworkManager.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = NetworkManager.h; path = JSQMessagesDemo/NetworkManager.h; sourceTree = "<group>"; };
 		DE0A831E1AF09F5B0079F83B /* librabbitmq.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = librabbitmq.a; path = lib/librabbitmq.a; sourceTree = "<group>"; };
 		DE0A83211AF0A1270079F83B /* amqp.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = amqp.h; sourceTree = "<group>"; };
 		DE0A83221AF0A1270079F83B /* amqp_framing.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = amqp_framing.h; sourceTree = "<group>"; };
@@ -351,7 +354,7 @@
 		88A25EF919D8DEC400924534 = {
 			isa = PBXGroup;
 			children = (
-				A38F63D91AF4B7CB006334FC /* Reachability */,
+				A33547D61AFC73D30045D262 /* NetworkManager */,
 				DE0A83201AF0A1270079F83B /* include */,
 				886C33FE19F45E30006B4997 /* JSQMessagesViewController.podspec */,
 				88A25F3E19D8E01A00924534 /* JSQMessagesViewController */,
@@ -413,8 +416,6 @@
 				8885734C19DE55D000E89D20 /* NSUserDefaults+DemoSettings.m */,
 				88A25FDD19D8E0C400924534 /* TableViewController.h */,
 				88A25FDE19D8E0C400924534 /* TableViewController.m */,
-				A38F63DF1AF8D5EF006334FC /* NetworkManager.m */,
-				A38F63E11AF8D644006334FC /* NetworkManager.h */,
 			);
 			path = JSQMessagesDemo;
 			sourceTree = "<group>";
@@ -639,13 +640,17 @@
 			path = ViewTests;
 			sourceTree = "<group>";
 		};
-		A38F63D91AF4B7CB006334FC /* Reachability */ = {
+		A33547D61AFC73D30045D262 /* NetworkManager */ = {
 			isa = PBXGroup;
 			children = (
+				A38F63DF1AF8D5EF006334FC /* NetworkManager.m */,
+				A38F63E11AF8D644006334FC /* NetworkManager.h */,
 				A38F63DA1AF4B7EF006334FC /* Reachability.m */,
 				A38F63DC1AF4B806006334FC /* Reachability.h */,
+				A33547D71AFC74B70045D262 /* RBConnection.h */,
+				A33547D81AFC74B70045D262 /* RBConnection.m */,
 			);
-			name = Reachability;
+			name = NetworkManager;
 			sourceTree = "<group>";
 		};
 		DE0A83201AF0A1270079F83B /* include */ = {
@@ -860,6 +865,7 @@
 				883C11781A09FB100092A16D /* JSQMessagesCellTextView.m in Sources */,
 				88A25FB919D8E01A00924534 /* UIView+JSQMessages.m in Sources */,
 				88A25FCA19D8E01A00924534 /* JSQMessagesCollectionView.m in Sources */,
+				A33547D91AFC74B70045D262 /* RBConnection.m in Sources */,
 				88A25FD219D8E01A00924534 /* JSQMessagesLabel.m in Sources */,
 				88445B4019E1B4470014F889 /* JSQLocationMediaItem.m in Sources */,
 				88A25FC619D8E01A00924534 /* JSQMessagesAvatarImage.m in Sources */,

@@ -17,7 +17,7 @@
 //
 
 #import "DemoMessagesViewController.h"
-#import "amqp_tcp_socket.h"
+#import "NetworkManager.h"
 
 @implementation DemoMessagesViewController
 
@@ -118,7 +118,7 @@
 
 
 #pragma mark - Process Msg arrived notification
-extern NSString * const RecvMsgNotification;
+
 - (void) registerRecvMsgObserver{
     NSLog(@"Register recvMsg Notification = %@", RecvMsgNotification);
     _recvMsgNotificationCenter = [NSNotificationCenter defaultCenter];
@@ -135,14 +135,6 @@ extern NSString * const RecvMsgNotification;
                                              [weakSelf updateUI:note.userInfo[@"RecvMsg"]];
                                          }
                        ];
-    
-    
-}
-
-- (void)processRecvMsg:(NSString *)recvRawMsg
-{
-    //process
-    //[self updateUI:msg];
 }
 
 - (void)updateUI:(NSString *)recvMsg

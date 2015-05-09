@@ -26,5 +26,5 @@
 
 - (IBAction)unwindSegue:(UIStoryboardSegue *)sender;
 
-@property (strong, nonatomic) NetworkManager *networkManager;
+@property (weak, nonatomic) NetworkManager *networkManager;
 @end
