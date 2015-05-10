@@ -15,7 +15,9 @@ extern NSString * const RecvMsgNotification;
 
 @interface NetworkManager : NSObject
 
-@property (readwrite, atomic) BOOL isNetworkReachable;
+@property (readwrite, nonatomic) BOOL isNetworkReachable;
+
+- (void)sendMessage:(JSQMessage *)msg;
 
 + (instancetype)shareNetworkManager;
 

@@ -22,6 +22,7 @@
 
 #import "DemoModelData.h"
 #import "NSUserDefaults+DemoSettings.h"
+#import "NetworkManager.h"
 
 
 @class DemoMessagesViewController;
@@ -43,6 +44,8 @@
 
 @property (strong, nonatomic) NSNotificationCenter *recvMsgNotificationCenter;
 @property (strong, nonatomic) id recvMsgObserver;
+
+@property (weak, nonatomic) NetworkManager *networkManager;
 
 - (void)receiveMessagePressed:(UIBarButtonItem *)sender;
 

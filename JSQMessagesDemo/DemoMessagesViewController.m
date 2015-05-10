@@ -37,6 +37,7 @@
     [super viewDidLoad];
     
     self.title = @"JSQMessages";
+    self.networkManager = [NetworkManager shareNetworkManager];
     
     /**
      *  You MUST set your senderId and display name
@@ -379,17 +380,8 @@
     NSLog(@"sending sendername=%@, sendid=%@, msg=%@", message.senderDisplayName, message.senderId, message.text);
     NSLog(@"didPressSendButton");
     
-    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^(void){
-        
-        NSLog(@"sending msg...");
-        //Fire a Msg?
-        //[self. sendMessage: message];
-        
-        dispatch_async(dispatch_get_main_queue(), ^(void){
-            NSLog(@"update send msg UI");
-            [self finishSendingMessageAnimated:YES];
-        });
-    });
+    [self.networkManager sendMessage:message];
+    [self finishSendingMessageAnimated:YES];
 }
 
 - (void)didPressAccessoryButton:(UIButton *)sender

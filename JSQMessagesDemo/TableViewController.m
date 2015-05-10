@@ -170,4 +170,8 @@
     [self dismissViewControllerAnimated:YES completion:nil];
 }
 
+- (void) dealloc{
+    NSLog(@"TableViewController dealloc");
+}
+
 @end

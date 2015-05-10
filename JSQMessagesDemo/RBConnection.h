@@ -14,6 +14,7 @@ static char * const rabbit_hostname = "localhost";
 static char * const login_rabbit_username = "test";
 static char * const login_rabbit_password = "test";
 static int    const rabbit_port = 5672;
+NSInteger a;
 
 extern NSString * const RecvMsgNotification;
 extern NSString * const ConnectionLostNotification;
@@ -28,11 +29,11 @@ extern NSString * const ConnectionLostNotification;
 
 //TODO: Use enum{}status instead
 @property (readwrite, nonatomic) BOOL isLoginSuccess;
+//@property BOOL isLoginSuccess;
 @property (readwrite, nonatomic) BOOL isLogging;
 
 - (BOOL)login;
 - (void)sendMessage: (JSQMessage *)msg;
-- (void)receiveMessage;
 - (void)close;
 
 @end

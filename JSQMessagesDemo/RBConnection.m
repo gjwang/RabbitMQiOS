@@ -13,17 +13,21 @@
 @property (readwrite, nonatomic) amqp_connection_state_t conn;
 @property (readwrite, nonatomic) BOOL stop;
 
+
 - (NSString *)consumeMsg;
 @end
 
 @implementation RBConnection
 
+@synthesize isLoginSuccess = _isLoginSuccess;
+@synthesize isLogging = _isLogging;
+
 - (instancetype)init{
     self = [super init];
     if (self) {
-        self.isLoginSuccess = NO;
-        self.isLogging = NO;
-        self.conn = NULL;
+        _isLoginSuccess = NO;
+        _isLogging = NO;
+        _conn = NULL;
     }
     return self;
 }
@@ -166,7 +170,7 @@ NSString * const ConnectionLostNotification = @"ConnectionLostNotification";
         if (AMQP_RESPONSE_NORMAL != res.reply_type) {
             //TODO: something bad happed
             NSLog(@"amqp_consume_message failed, res.reply_type=%d", res.reply_type);
-            _stop = YES;
+            self.stop = YES;
             return retString;
         }
         
@@ -194,11 +198,34 @@ NSString * const ConnectionLostNotification = @"ConnectionLostNotification";
     return retString;
 }
 
+- (BOOL) isLogging{
+    NSLog(@"getIsLogging");
+    return _isLogging;
+}
+
+- (void) setIsLogging:(BOOL)isLogging{
+    NSLog(@"setIsLogging");
+    _isLogging = isLogging;
+}
+
+
+- (BOOL)isLoginSuccess{
+    NSLog(@"getIsLoginSuccess");
+    return _isLoginSuccess;
+}
+
+
+- (void)setIsLoginSuccess:(BOOL)isLoginSuccess{
+    NSLog(@"setIsLoginSuccess");
+    _isLoginSuccess = isLoginSuccess;
+}
 
 - (void) sendMessage: (JSQMessage *)msg
 {
     //TODO: 1. store msg in a queue
-
+    
+    //not thread safe
+    
     const amqp_connection_state_t conn = self.conn;
     char const *exchange = "amq.direct";
     amqp_channel_t const channel = 1;
@@ -209,8 +236,9 @@ NSString * const ConnectionLostNotification = @"ConnectionLostNotification";
     props.delivery_mode = 2; // persistent delivery mode
     
     if (self.isLoginSuccess && conn != NULL) {
-        //char const *routingkey = [msg.senderId UTF8String];
-        char const *routingkey = "pythonguy";
+        //char const *routingkey = [msg.senderToId UTF8String];
+        char const *sendTo = "pythonguy";
+        char const *routingkey = sendTo;
         char const *messagebody = [msg.text UTF8String];
         
         amqp_status_enum responseStatus = amqp_basic_publish(conn,
@@ -230,13 +258,9 @@ NSString * const ConnectionLostNotification = @"ConnectionLostNotification";
 
 - (void)receiveMessage
 {
-    if (!_isLoginSuccess | _stop) {
-        return;
-    }
-    
     dispatch_queue_t connRecvQueue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
     dispatch_async(connRecvQueue, ^{
-        while (!_stop) {
+        while (!self.stop) {
             //TODO: wait for logginSuccess Msg
             
             NSString *recvMsg = [self consumeMsg];
@@ -265,6 +289,7 @@ NSString * const ConnectionLostNotification = @"ConnectionLostNotification";
             }
         }
         
+        [self close];
         //operation on RBConnection should keep in main queue
         dispatch_async(dispatch_get_main_queue(), ^{
             [self destroyConn];
@@ -274,8 +299,11 @@ NSString * const ConnectionLostNotification = @"ConnectionLostNotification";
 }
 
 - (void) close{
-    _isLoginSuccess = NO;
-    _stop = YES;
+    //It may be called more than once, and should be OK if calls from the same main queue
+    //NSLog(@"RBConnection close");
+    
+    self.isLoginSuccess = NO;
+    self.stop = YES;
 }
 
 - (void)destroyConn
@@ -302,7 +330,9 @@ NSString * const ConnectionLostNotification = @"ConnectionLostNotification";
 
 - (void)dealloc{
     NSLog(@"RBConnetion dealloc");
-    [self close];
+    //[self close];
+    //_isLoginSuccess = NO;
+    //_stop = YES;
 }
 
 @end

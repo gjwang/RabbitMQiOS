@@ -13,7 +13,7 @@
 #import "RBConnection.h"
 
 @interface NetworkManager()
-@property (readwrite, atomic) RBConnection* rbConn;
+@property (strong, readwrite, atomic) RBConnection* rbConn;
 //@property (readwrite, atomic) NSMutableArray* rbConnArray;
 
 @end
@@ -42,6 +42,9 @@
         [self networkReachability];
         [self registerRecvMsgObserver];
         [self registerConnLostObserver];
+        
+        //For runs on simulator
+        [self startConnetionAsync];
     }
     return self;
 }
@@ -139,6 +142,7 @@
 
 - (void) sendMessage: (JSQMessage *)msg
 {
+    //not thread safe
     @synchronized(self) {
         if (self.rbConn) {
             [self.rbConn sendMessage:msg];
@@ -197,7 +201,7 @@
 
         dispatch_async(dispatch_get_main_queue(), ^{
             NSLog(@"UNREACHABLE!");
-            [self closeConn];
+            //[self closeConn];
         });
 
         //TODO: fire a nofitcation
@@ -208,4 +212,7 @@
     [reach startNotifier];
 }
 
+- (void) dealloc{
+    NSLog(@"NetworkManger dealloc");
+}
 @end
