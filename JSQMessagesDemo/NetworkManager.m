@@ -42,6 +42,7 @@
         [self networkReachability];
         [self registerRecvMsgObserver];
         [self registerConnLostObserver];
+        [self registerRBConnObserver];
         
         //For runs on simulator
         [self startConnetionAsync];
@@ -78,11 +79,12 @@
 }
 */
 
+/*
 - (void) startConnetionAsync
 {
     @synchronized(self) {
         //It is not thread safe, but if keep operation NetworkManger in main queue, it should be OK
-        if ([self.rbConn isLogging]) {
+        if (self.rbConn.rbConnStatus == RBConnLogging) {
             NSLog(@"startConnetionAsync prev connection is still logging");
             return;
         }
@@ -95,7 +97,7 @@
         //RBConnection *rbConn = nil;
         NSLog(@"startConnetionAsync start a new connetion");
         self.rbConn = [[RBConnection alloc] init];
-        //self.rbConn = rbConn;
+        
         dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^(void){
             [self.rbConn login];
         });
@@ -105,14 +107,26 @@
     
     //NSLog(@"started rbConnArray count=%lu", (unsigned long)[self.rbConnArray count]);
 }
+*/
 
-- (BOOL)isLoginSuccess{
+- (void) startConnetionAsync
+{
     @synchronized(self) {
-        if (self.rbConn) {
-            return [self.rbConn isLoginSuccess];
-        }else{
-            return NO;
+        //It is not thread safe, but if keep operation NetworkManger in main queue, it should be OK
+        if (self.rbConn.rbConnStatus == RBConnLogging) {
+            NSLog(@"startConnetionAsync: prev connection is still logging");
+            return;
         }
+        
+        if (self.rbConn) {
+            NSLog(@"startConnetionAsync: close the old connection");
+        }
+        [self closeConn];
+        
+        NSLog(@"startConnetionAsync start a new connetion");
+        self.rbConn = [[RBConnection alloc] init];
+        
+        [self.rbConn loginAsync];
     }
 }
 
@@ -124,11 +138,11 @@
 }
 
 - (void) registerRecvMsgObserver{
-    NSLog(@"Register recvMsg Notification = %@", RecvMsgNotification);
+    NSLog(@"Register recvMsg Notification = %@", RBRecvMsgNotification);
     NSOperationQueue *mainQueue = [NSOperationQueue mainQueue];
     
     __weak typeof(self) weakSelf = self;
-    [[NSNotificationCenter defaultCenter] addObserverForName:RecvMsgNotification
+    [[NSNotificationCenter defaultCenter] addObserverForName:RBRecvMsgNotification
                                                       object:nil
                                                        queue:mainQueue
                                                   usingBlock:^(NSNotification *note) {
@@ -150,18 +164,40 @@
     }
 }
 
+- (void) registerRBConnObserver{
+    NSLog(@"Register %@", RBLoginFailedNotification);
+    NSOperationQueue *mainQueue = [NSOperationQueue mainQueue];
+    
+    [[NSNotificationCenter defaultCenter] addObserverForName:RBLoginFailedNotification
+                                                      object:nil
+                                                       queue:mainQueue
+                                                  usingBlock:^(NSNotification *note) {
+                                                      NSLog(@"recv %@", RBLoginFailedNotification);
+                                                      
+                                                      //if (self.retry_times < MAX_RETRY_TIMES) {
+                                                      //    self.retry_times++;
+                                                      //    [self startConnetionAsync];
+                                                      //}
+                                                      NSLog(@"relogin 1 sec late");
+                                                      dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 1 * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
+                                                          [self startConnetionAsync];
+                                                      });
+
+                                                  }
+     ];
+}
 
 - (void) registerConnLostObserver{
-    NSLog(@"Register %@", ConnectionLostNotification);
+    NSLog(@"Register %@", RBLostNotification);
     //_recvMsgNotificationCenter = [NSNotificationCenter defaultCenter];
     NSOperationQueue *mainQueue = [NSOperationQueue mainQueue];
     
     //__weak typeof(self) weakSelf = self;
-    [[NSNotificationCenter defaultCenter] addObserverForName:ConnectionLostNotification
+    [[NSNotificationCenter defaultCenter] addObserverForName:RBLostNotification
                                                                object:nil
                                                                 queue:mainQueue
                                                            usingBlock:^(NSNotification *note) {
-                                                               NSLog(@"recv ConnectionLostNotification");
+                                                               NSLog(@"recv %@", RBLostNotification);
                                                                [self startConnetionAsync];
                                                            }
                         ];

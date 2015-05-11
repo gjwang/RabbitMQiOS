@@ -121,12 +121,12 @@
 #pragma mark - Process Msg arrived notification
 
 - (void) registerRecvMsgObserver{
-    NSLog(@"Register recvMsg Notification = %@", RecvMsgNotification);
+    NSLog(@"Register %@", RBRecvMsgNotification);
     _recvMsgNotificationCenter = [NSNotificationCenter defaultCenter];
     NSOperationQueue *mainQueue = [NSOperationQueue mainQueue];
     
     __weak typeof(self) weakSelf = self;
-    _recvMsgObserver = [_recvMsgNotificationCenter addObserverForName:RecvMsgNotification
+    _recvMsgObserver = [_recvMsgNotificationCenter addObserverForName:RBRecvMsgNotification
                                              object:nil
                                               queue:mainQueue
                                          usingBlock:^(NSNotification *note) {

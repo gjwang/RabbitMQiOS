@@ -8,45 +8,47 @@
 
 #import "RBConnection.h"
 
+NSUInteger MAX_RETRY_TIMES = 3;
+
+NSString * const RBRecvMsgNotification = @"RecvMsgNotification";
+NSString * const RBLostNotification = @"RBLostNotification";
+NSString * const RBLoginFailedNotification = @"RBLoginFailedNotification";
+
 @interface RBConnection()
 
 @property (readwrite, nonatomic) amqp_connection_state_t conn;
-@property (readwrite, nonatomic) BOOL stop;
-
+@property (readwrite, nonatomic) NSUInteger retry_times;
 
 - (NSString *)consumeMsg;
 @end
 
 @implementation RBConnection
 
-@synthesize isLoginSuccess = _isLoginSuccess;
-@synthesize isLogging = _isLogging;
 
 - (instancetype)init{
     self = [super init];
     if (self) {
-        _isLoginSuccess = NO;
-        _isLogging = NO;
         _conn = NULL;
+        _retry_times = 0;
+        _rbConnStatus = RBConnLogout;
     }
     return self;
 }
 
-- (BOOL) login
+- (RBConnStatus) login
 {
-    if (self.isLogging) {
-        NSLog(@"rbconnecting is logging...");
+    if (self.rbConnStatus == RBConnLogging /*| self.rbConnStatus == RBConnLogSuccess*/) {
+        NSLog(@"rbconnecting is logging or aleady loggin");
+        return self.rbConnStatus;
     }
     
-    self.isLogging = YES;
+    self.rbConnStatus = RBConnLogging;
     
     NSLog(@"loginRabbitMqServer");
     char const *hostname = rabbit_hostname;
     char const *username = login_rabbit_username;
     char const *password = login_rabbit_password;
     const int port = rabbit_port;
-    
-    self.isLoginSuccess = NO;
     
     amqp_connection_state_t conn = NULL;
     conn = amqp_new_connection();
@@ -87,39 +89,143 @@
     }
     
     self.conn = conn;
-    if ([self bindRecvRabbitMq]) {
+    if ([RBConnection bindRecvRabbitMq:conn]) {
         NSLog(@"loggin Success");
         //TODO: fire a notification to begin consuming msg
         
-        self.isLoginSuccess = YES;
-        self.isLogging = NO;
+        self.rbConnStatus = RBConnLogSuccess;
         [self receiveMessage];
-        return self.isLoginSuccess;
+        return self.rbConnStatus;
     }else{
         NSLog(@"login failed");
         goto failed;
     }
     
 failed:
+    
     if (conn) {
         amqp_destroy_connection(conn);
         conn = NULL;
     }
     
     //Logining failed, fire a notification
-    self.isLogging = NO;
-    return self.isLoginSuccess;
+    self.rbConnStatus = RBConnLogFailed;
+    return self.rbConnStatus;
 }
 
-- (BOOL) bindRecvRabbitMq
+//Modified RBConnection Status in main queue
+- (RBConnStatus) loginAsync{
+    if (self.rbConnStatus == RBConnLogging /*| self.rbConnStatus == RBConnLogSuccess*/) {
+        NSLog(@"rbconnecting is logging or aleady loggin");
+        return self.rbConnStatus;
+    }
+    self.rbConnStatus = RBConnLogging;
+    
+    NSLog(@"loginRabbitMqServer logginAsync");
+
+    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+        char const *hostname = rabbit_hostname;
+        char const *username = login_rabbit_username;
+        char const *password = login_rabbit_password;
+        const int port = rabbit_port;
+        
+        amqp_connection_state_t conn = NULL;
+        BOOL failed = NO;
+        
+        conn = amqp_new_connection();
+        if (conn != NULL) {
+            amqp_socket_t *socket = NULL;
+            socket = amqp_tcp_socket_new(conn);
+            if (socket != NULL) {
+                int status;
+                status = amqp_socket_open(socket, hostname, port);
+                if (status == AMQP_STATUS_OK) {
+                    amqp_rpc_reply_t res;
+                    res = amqp_login(conn, "/", 0, 131072, 0, AMQP_SASL_METHOD_PLAIN, username, password);
+                    NSLog(@"amqp_login Success");
+                    
+                    if (AMQP_RESPONSE_NORMAL == res.reply_type) {
+                        amqp_channel_t const channel = 1;
+                        amqp_channel_open(conn, channel);
+                        res = amqp_get_rpc_reply(conn);
+                        
+                        if (AMQP_RESPONSE_NORMAL == res.reply_type) {
+                            RBConnStatus rbConnStatus;
+                            if ([RBConnection bindRecvRabbitMq:conn]) {
+                                NSLog(@"bindRecvRabbitMq Success");
+                                //TODO: fire a notification to begin consuming msg, or KVO
+                                rbConnStatus = RBConnLogSuccess;
+                                failed = NO;
+                            }else{
+                                rbConnStatus = RBConnLogFailed;
+                                failed = YES;
+                                
+                                NSLog(@"bindRecvRabbitMq failed");
+                            }
+                            
+                            dispatch_async(dispatch_get_main_queue(), ^{
+                                self.conn = conn;
+                                self.rbConnStatus = rbConnStatus;
+                                if (self.rbConnStatus == RBConnLogSuccess) {
+                                    [self receiveMessage];
+                                }
+                            });
+                        }else{
+                            failed = YES;
+                            NSLog(@"amqp_channel_open failed! reply_code=%d", res.reply_type);
+                        }
+                    }else{
+                        failed = YES;
+                        NSLog(@"amqp login failed! reply_code=%d", res.reply_type);
+                    }
+                }else{
+                    failed = YES;
+                    NSLog(@"opening TCP socket failed");
+                }
+            }else{
+                failed = YES;
+                NSLog(@"creating TCP socket failed");
+            }
+        }else{
+            failed = YES;
+            NSLog(@"New connection failed");
+        }
+        
+        if (failed) {
+            dispatch_async(dispatch_get_main_queue(), ^{
+                self.rbConnStatus = RBConnLogFailed;
+            });
+            
+            if (conn) {
+                amqp_destroy_connection(conn);
+                conn = NULL;
+            }
+            
+            //operation on RBConnection should keep in main queue
+            dispatch_async(dispatch_get_main_queue(), ^{
+                NSLog(@"Fire RBConnection Login failed");
+                NSNotification *connLost = [NSNotification notificationWithName:RBLoginFailedNotification
+                                                                         object:self
+                                                                       userInfo:nil
+                                            ];
+                [[NSNotificationCenter defaultCenter] postNotification:(NSNotification *)connLost];
+            });
+
+        }
+    });
+    
+    return self.rbConnStatus;
+    
+}
+
++ (BOOL) bindRecvRabbitMq:(amqp_connection_state_t) conn
 {
     char const *exchange = "amq.direct";
     
-    char const * selfId = "iphoneguy";
+    char const * selfId = sendFromId;
     char const *recvRoutingkey = selfId;
     char const *bindingkey = recvRoutingkey;
     
-    amqp_connection_state_t const conn = self.conn;
     if (conn != NULL) {
         amqp_channel_t const channel = 1;
         amqp_queue_declare_ok_t *r = amqp_queue_declare(conn, channel, amqp_empty_bytes, 0, 0, 0, 1,
@@ -149,16 +255,13 @@ failed:
     return NO;
 }
 
-NSString * const RecvMsgNotification = @"RecvMsgNotification";
-NSString * const ConnectionLostNotification = @"ConnectionLostNotification";
-
 
 - (NSString *)consumeMsg
 {
     NSString *retString = nil;
     
     const amqp_connection_state_t conn = self.conn;
-    if ( self.isLoginSuccess && conn != NULL ) {
+    if ( self.rbConnStatus == RBConnLogSuccess && conn != NULL ) {
         amqp_rpc_reply_t res;
         amqp_envelope_t envelope;
         
@@ -170,7 +273,7 @@ NSString * const ConnectionLostNotification = @"ConnectionLostNotification";
         if (AMQP_RESPONSE_NORMAL != res.reply_type) {
             //TODO: something bad happed
             NSLog(@"amqp_consume_message failed, res.reply_type=%d", res.reply_type);
-            self.stop = YES;
+            self.rbConnStatus = RBConnLogout;
             return retString;
         }
         
@@ -198,28 +301,6 @@ NSString * const ConnectionLostNotification = @"ConnectionLostNotification";
     return retString;
 }
 
-- (BOOL) isLogging{
-    NSLog(@"getIsLogging");
-    return _isLogging;
-}
-
-- (void) setIsLogging:(BOOL)isLogging{
-    NSLog(@"setIsLogging");
-    _isLogging = isLogging;
-}
-
-
-- (BOOL)isLoginSuccess{
-    NSLog(@"getIsLoginSuccess");
-    return _isLoginSuccess;
-}
-
-
-- (void)setIsLoginSuccess:(BOOL)isLoginSuccess{
-    NSLog(@"setIsLoginSuccess");
-    _isLoginSuccess = isLoginSuccess;
-}
-
 - (void) sendMessage: (JSQMessage *)msg
 {
     //TODO: 1. store msg in a queue
@@ -235,9 +316,9 @@ NSString * const ConnectionLostNotification = @"ConnectionLostNotification";
     props.content_type = amqp_cstring_bytes("text/plain");
     props.delivery_mode = 2; // persistent delivery mode
     
-    if (self.isLoginSuccess && conn != NULL) {
+    if (self.rbConnStatus == RBConnLogSuccess && conn != NULL) {
         //char const *routingkey = [msg.senderToId UTF8String];
-        char const *sendTo = "pythonguy";
+        char const *sendTo = sendToId;
         char const *routingkey = sendTo;
         char const *messagebody = [msg.text UTF8String];
         
@@ -260,7 +341,7 @@ NSString * const ConnectionLostNotification = @"ConnectionLostNotification";
 {
     dispatch_queue_t connRecvQueue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
     dispatch_async(connRecvQueue, ^{
-        while (!self.stop) {
+        while (self.rbConnStatus == RBConnLogSuccess) {
             //TODO: wait for logginSuccess Msg
             
             NSString *recvMsg = [self consumeMsg];
@@ -269,7 +350,7 @@ NSString * const ConnectionLostNotification = @"ConnectionLostNotification";
                 NSLog(@"Post recvMsg notificatin msg=%@", recvMsg);
                 NSDictionary *msgDict = @{@"RecvMsg" : recvMsg};
                 
-                NSNotification *recvMsgNote = [NSNotification notificationWithName:RecvMsgNotification
+                NSNotification *recvMsgNote = [NSNotification notificationWithName:RBRecvMsgNotification
                                                                             object:self
                                                                           userInfo:msgDict
                                                ];
@@ -277,8 +358,8 @@ NSString * const ConnectionLostNotification = @"ConnectionLostNotification";
             }else{
                 //operation on RBConnection should keep in main queue
                 dispatch_async(dispatch_get_main_queue(), ^{
-                    NSLog(@"Fire ConnectionLostNotification");
-                    NSNotification *connLost = [NSNotification notificationWithName:ConnectionLostNotification
+                    NSLog(@"Fire %@", RBLostNotification);
+                    NSNotification *connLost = [NSNotification notificationWithName:RBLostNotification
                                                                              object:self
                                                                            userInfo:nil
                                                 ];
@@ -289,7 +370,6 @@ NSString * const ConnectionLostNotification = @"ConnectionLostNotification";
             }
         }
         
-        [self close];
         //operation on RBConnection should keep in main queue
         dispatch_async(dispatch_get_main_queue(), ^{
             [self destroyConn];
@@ -302,14 +382,13 @@ NSString * const ConnectionLostNotification = @"ConnectionLostNotification";
     //It may be called more than once, and should be OK if calls from the same main queue
     //NSLog(@"RBConnection close");
     
-    self.isLoginSuccess = NO;
-    self.stop = YES;
+    self.rbConnStatus = RBConnLogout;
 }
 
 - (void)destroyConn
 {
     NSLog(@"destroyConn");
-    self.isLoginSuccess = NO;
+    self.rbConnStatus = RBConnLogout;
     
     if (self.conn) {
         //NSLog(@"amqp_channel_close ...");
@@ -330,9 +409,6 @@ NSString * const ConnectionLostNotification = @"ConnectionLostNotification";
 
 - (void)dealloc{
     NSLog(@"RBConnetion dealloc");
-    //[self close];
-    //_isLoginSuccess = NO;
-    //_stop = YES;
 }
 
 @end

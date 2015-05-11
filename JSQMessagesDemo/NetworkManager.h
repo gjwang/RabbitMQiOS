@@ -11,8 +11,6 @@
 #import <CoreLocation/CoreLocation.h>
 #import "RBConnection.h"
 
-extern NSString * const RecvMsgNotification;
-
 @interface NetworkManager : NSObject
 
 @property (readwrite, nonatomic) BOOL isNetworkReachable;
