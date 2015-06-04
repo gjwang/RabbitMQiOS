@@ -192,10 +192,6 @@ failed:
         }
         
         if (failed) {
-            dispatch_async(dispatch_get_main_queue(), ^{
-                self.rbConnStatus = RBConnLogFailed;
-            });
-            
             if (conn) {
                 amqp_destroy_connection(conn);
                 conn = NULL;
@@ -203,7 +199,10 @@ failed:
             
             //operation on RBConnection should keep in main queue
             dispatch_async(dispatch_get_main_queue(), ^{
+                self.rbConnStatus = RBConnLogFailed;
+                
                 NSLog(@"Fire RBConnection Login failed");
+                
                 NSNotification *connLost = [NSNotification notificationWithName:RBLoginFailedNotification
                                                                          object:self
                                                                        userInfo:nil
@@ -322,12 +321,13 @@ failed:
         char const *routingkey = sendTo;
         char const *messagebody = [msg.text UTF8String];
         
+        //basic.publish is an async method
         amqp_status_enum responseStatus = amqp_basic_publish(conn,
                                                              channel,
                                                              amqp_cstring_bytes(exchange),
                                                              amqp_cstring_bytes(routingkey),
                                                              0,
-                                                             0,
+                                                             0,//immediate
                                                              &props,
                                                              amqp_cstring_bytes(messagebody));
         //NSLog(@"%d", responseStatus);
@@ -356,25 +356,16 @@ failed:
                                                ];
                 [[NSNotificationCenter defaultCenter] postNotification:(NSNotification *)recvMsgNote];
             }else{
-                //operation on RBConnection should keep in main queue
-                dispatch_async(dispatch_get_main_queue(), ^{
-                    NSLog(@"Fire %@", RBLostNotification);
-                    NSNotification *connLost = [NSNotification notificationWithName:RBLostNotification
-                                                                             object:self
-                                                                           userInfo:nil
-                                                ];
-                    [[NSNotificationCenter defaultCenter] postNotification:(NSNotification *)connLost];
-                });
-                
+                NSLog(@"recv msg failed");
                 break;
             }
         }
         
         //operation on RBConnection should keep in main queue
         dispatch_async(dispatch_get_main_queue(), ^{
+            self.rbConnStatus = RBConnLogout;
             [self destroyConn];
         });
-        
     });
 }
 
@@ -383,6 +374,8 @@ failed:
     //NSLog(@"RBConnection close");
     
     self.rbConnStatus = RBConnLogout;
+    
+    //not directly cal destroyConn, wait for receiveMessage to breakout instead
 }
 
 - (void)destroyConn
@@ -400,11 +393,17 @@ failed:
         
         NSLog(@"amqp_destroy_connection ...");
         amqp_destroy_connection(self.conn);
-        NSLog(@"close OK");
+        NSLog(@"ampq close OK");
     }
     
     self.conn = NULL;
     
+    NSLog(@"Fire %@", RBLostNotification);
+    NSNotification *connLost = [NSNotification notificationWithName:RBLostNotification
+                                                             object:self
+                                                           userInfo:nil
+                                ];
+    [[NSNotificationCenter defaultCenter] postNotification:(NSNotification *)connLost];
 }
 
 - (void)dealloc{

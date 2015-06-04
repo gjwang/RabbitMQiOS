@@ -14,7 +14,6 @@
 
 @interface NetworkManager()
 @property (strong, readwrite, atomic) RBConnection* rbConn;
-//@property (readwrite, atomic) NSMutableArray* rbConnArray;
 
 @end
 
@@ -37,7 +36,6 @@
     if (self){
         self.rbConn = nil;
         self.isNetworkReachable = NO;//network status is Unknown actully;
-        //self.rbConnArray = [[NSMutableArray alloc]init];
         
         [self networkReachability];
         [self registerRecvMsgObserver];
@@ -52,8 +50,6 @@
 
 
 - (void) closeConn{
-    //[self.rbConnArray removeObject:self.rbConn];
-    
     @synchronized(self){
         if (self.rbConn) {
             [self.rbConn close];
@@ -61,9 +57,6 @@
         
         self.rbConn = nil;
     }
-    
-    //NSLog(@"closed rbConnArray count=%lu", (unsigned long)[self.rbConnArray count]);
-
 }
 
 /*
@@ -79,35 +72,6 @@
 }
 */
 
-/*
-- (void) startConnetionAsync
-{
-    @synchronized(self) {
-        //It is not thread safe, but if keep operation NetworkManger in main queue, it should be OK
-        if (self.rbConn.rbConnStatus == RBConnLogging) {
-            NSLog(@"startConnetionAsync prev connection is still logging");
-            return;
-        }
-        
-        if (self.rbConn) {
-            NSLog(@"startConnetionAsync close the old connection");
-        }
-        [self closeConn];
-        
-        //RBConnection *rbConn = nil;
-        NSLog(@"startConnetionAsync start a new connetion");
-        self.rbConn = [[RBConnection alloc] init];
-        
-        dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^(void){
-            [self.rbConn login];
-        });
-        
-        //[self.rbConnArray addObject:rbConn];
-    }
-    
-    //NSLog(@"started rbConnArray count=%lu", (unsigned long)[self.rbConnArray count]);
-}
-*/
 
 - (void) startConnetionAsync
 {
@@ -227,8 +191,6 @@
             NSLog(@"REACHABLE!");
             [self startConnetionAsync];
         });
-        
-        
     };
     
     reach.unreachableBlock = ^(Reachability *reach)
