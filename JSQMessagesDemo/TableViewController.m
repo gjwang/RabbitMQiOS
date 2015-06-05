@@ -17,15 +17,38 @@
 //
 
 #import "TableViewController.h"
+#import "DemoSettingsViewController.h"
+
+@interface TableViewController(){
+    NSUInteger userNumber;
+    NSArray *userNamesArray;
+}
+
+@end
 
 @implementation TableViewController
 
 #pragma mark - View lifecycle
 
+- (id) init
+{
+    self = [super init];
+    if (self) {
+        self.title = NSLocalizedString(@"JSQMessagesViewController", @"JSQMessagesViewController");
+        self.tabBarItem.image = [UIImage imageNamed:@"first"];
+    }
+    return self;
+}
+
 - (void)viewDidLoad
 {
     [super viewDidLoad];
-    self.title = @"JSQMessagesViewController";
+    self.title = @"History";
+    
+    self.demoData = [[DemoModelData alloc] init];
+    
+    userNumber = [self.demoData.users count];
+    userNamesArray = [self.demoData.users allValues];
     
     self.networkManager = [NetworkManager shareNetworkManager];
 }
@@ -40,16 +63,16 @@
 
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView
 {
-    return 3;
+    return 2;
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
 {
-    if (section == 2) {
+    if (section == 1) {
         return 1;
     }
-    
-    return 2;
+
+    return userNumber;
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
@@ -57,31 +80,15 @@
     static NSString *CellIdentifier = @"CellIdentifier";
     UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:CellIdentifier];
     if (!cell) {
+        NSLog(@"cell is nill");
         cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:CellIdentifier];
         cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
     }
     
     if (indexPath.section == 0) {
-        switch (indexPath.row) {
-            case 0:
-                cell.textLabel.text = @"Push via storyboard";
-                break;
-            case 1:
-                cell.textLabel.text = @"Push programmatically";
-                break;
-        }
-    }
-    else if (indexPath.section == 1) {
-        switch (indexPath.row) {
-            case 0:
-                cell.textLabel.text = @"Modal via storyboard";
-                break;
-            case 1:
-                cell.textLabel.text = @"Modal programmatically";
-                break;
-        }
-    }
-    else if (indexPath.section == 2) {
+        cell.textLabel.text = userNamesArray[indexPath.row];
+        
+    }else if (indexPath.section == 1) {
         switch (indexPath.row) {
             case 0:
                 cell.textLabel.text = @"Settings";
@@ -96,8 +103,8 @@
 {
     switch (section) {
         case 0:
-            return @"Presentation";
-        case 2:
+            return @"History";
+        case 1:
             return @"Demo options";
         default:
             return nil;
@@ -114,50 +121,34 @@
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
 {
     if (indexPath.section == 0) {
-        switch (indexPath.row) {
-            case 0:
-                [self performSegueWithIdentifier:@"seguePushDemoVC" sender:self];
-                break;
-            case 1:
-            {
-                DemoMessagesViewController *vc = [DemoMessagesViewController messagesViewController];
-                [self.navigationController pushViewController:vc animated:YES];
-            }
-                break;
-        }
-    }
-    else if (indexPath.section == 1) {
-        switch (indexPath.row) {
-            case 0:
-                [self performSegueWithIdentifier:@"segueModalDemoVC" sender:self];
-                break;
-            case 1:
-            {
-                DemoMessagesViewController *vc = [DemoMessagesViewController messagesViewController];
-                vc.delegateModal = self;
-                UINavigationController *nc = [[UINavigationController alloc] initWithRootViewController:vc];
-                [self presentViewController:nc animated:YES completion:nil];
-            }
-                break;
-        }
-    }
-    else if (indexPath.section == 2) {
-        switch (indexPath.row) {
-            case 0:
-                [self performSegueWithIdentifier:@"SegueToSettings" sender:self];
-                break;
-        }
+        //
+        NSString *senderName = userNamesArray[indexPath.row];
+        NSLog(@"performSegueWithIdentifier senderName= %@", senderName);
+        
+        [self performSegueWithIdentifier:@"seguePushDemoVC" sender:senderName];
+    }else if (indexPath.section == 1) {
+        [self performSegueWithIdentifier:@"SegueToSettings" sender:self];
     }
 }
+
+#pragma mark - Table view delete
+/*
+- (UITableViewCellEditingStyle)tableView:(UITableView *)tableView
+           editingStyleForRowAtIndexPath:(NSIndexPath *)indexPath{
+    return UITableViewCellEditingStyleDelete;
+}
+*/
 
 #pragma mark - Segues
 
 - (void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender
 {
-    if ([segue.identifier isEqualToString:@"segueModalDemoVC"]) {
-        UINavigationController *nc = segue.destinationViewController;
-        DemoMessagesViewController *vc = (DemoMessagesViewController *)nc.topViewController;
-        vc.delegateModal = self;
+    //NSLog(@"prepareForSegue id=%@, name=%@", segue.identifier, sender);
+    
+    if ([segue.identifier isEqualToString:@"seguePushDemoVC"]) {
+        
+        DemoMessagesViewController *msgViewController = segue.destinationViewController;
+        msgViewController.senderName = sender;
     }
 }
 

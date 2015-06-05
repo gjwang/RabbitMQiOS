@@ -28,6 +28,17 @@
 
 @implementation DemoModelData
 
++ (instancetype)shareDemoDodelData{
+    static DemoModelData * _shareDemoModelData = nil;
+    
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        _shareDemoModelData = [[DemoModelData alloc] init];
+    });
+    
+    return _shareDemoModelData;
+}
+
 - (instancetype)init
 {
     self = [super init];

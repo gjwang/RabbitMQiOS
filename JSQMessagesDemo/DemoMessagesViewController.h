@@ -20,7 +20,7 @@
 // Import all the things
 #import "JSQMessages.h"
 
-#import "DemoModelData.h"
+#import "MessageDataSource.h"
 #import "NSUserDefaults+DemoSettings.h"
 #import "NetworkManager.h"
 
@@ -40,7 +40,8 @@
 
 @property (weak, nonatomic) id<JSQDemoViewControllerDelegate> delegateModal;
 
-@property (strong, nonatomic) DemoModelData *demoData;
+@property (strong, nonatomic) MessageDataSource *messageDataSource;
+@property (strong, nonatomic) NSString *senderName;
 
 @property (strong, nonatomic) NSNotificationCenter *recvMsgNotificationCenter;
 @property (strong, nonatomic) id recvMsgObserver;

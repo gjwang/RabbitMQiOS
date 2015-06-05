@@ -17,11 +17,28 @@
 //
 
 #import "DemoMessagesViewController.h"
-#import "NetworkManager.h"
+#import "MessageDataSource.h"
+//#import "DemoModelData.h"
 
 @implementation DemoMessagesViewController
 
 #pragma mark - View lifecycle
+
+- (id)init
+{
+    self = [super init];
+    if (self) {
+        self.title = NSLocalizedString(@"JSQMessages", @"JSQMessages");
+        self.tabBarItem.image = [UIImage imageNamed:@"second"];
+    }
+    return self;
+}
+
+/*
+- (void) setSenderName: (NSString *)senderName{
+    _senderName = senderName;
+}
+*/
 
 /**
  *  Override point for customization.
@@ -36,20 +53,21 @@
 {
     [super viewDidLoad];
     
-    self.title = @"JSQMessages";
-    self.networkManager = [NetworkManager shareNetworkManager];
-    
-    /**
-     *  You MUST set your senderId and display name
-     */
-    self.senderId = kJSQDemoAvatarIdSquires;
-    self.senderDisplayName = kJSQDemoAvatarDisplayNameSquires;
-    
+    //NSLog(@"senderName =%@", _senderName);
+    self.title = _senderName;
     
     /**
      *  Load up our fake data for the demo
      */
-    self.demoData = [[DemoModelData alloc] init];
+    self.messageDataSource = [[MessageDataSource alloc] init:_senderName];
+    
+    /**
+     *  You MUST set your senderId and display name
+     */
+    self.senderId = self.messageDataSource.myselfId;
+    self.senderDisplayName = self.messageDataSource.myselfName;
+    
+    
     [self registerRecvMsgObserver];
     
     
@@ -155,13 +173,13 @@
     /**
      *  Allow typing indicator to show
      */
-    NSMutableArray *userIds = [[self.demoData.users allKeys] mutableCopy];
+    NSMutableArray *userIds = [[self.messageDataSource.users allKeys] mutableCopy];
     [userIds removeObject:self.senderId];
     NSString *randomUserId = userIds[arc4random_uniform((int)[userIds count])];
         
     JSQMessage *newMessage = nil;
     newMessage = [JSQMessage messageWithSenderId:randomUserId
-                                     displayName:self.demoData.users[randomUserId]
+                                     displayName:self.messageDataSource.users[randomUserId]
                                             text:recvMsg];
         
         
@@ -173,7 +191,7 @@
     *  3. Call `finishReceivingMessage`
     */
     [JSQSystemSoundPlayer jsq_playMessageReceivedSound];
-    [self.demoData.messages addObject:newMessage];
+    [self.messageDataSource.messages addObject:newMessage];
     [self finishReceivingMessageAnimated:YES];
         
     NSLog(@"recv sendername=%@, senderid=%@, msg=%@", newMessage.senderDisplayName, newMessage.senderId, newMessage.text);
@@ -203,20 +221,21 @@
     /**
      *  Copy last sent message, this will be the new "received" message
      */
-    JSQMessage *copyMessage = [[self.demoData.messages lastObject] copy];
+    JSQMessage *copyMessage = [[self.messageDataSource.messages lastObject] copy];
     
+    /*
     if (!copyMessage) {
         copyMessage = [JSQMessage messageWithSenderId:kJSQDemoAvatarIdJobs
                                           displayName:kJSQDemoAvatarDisplayNameJobs
                                                  text:@"First received!"];
-    }
+    }*/
     
     /**
      *  Allow typing indicator to show
      */
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
         
-        NSMutableArray *userIds = [[self.demoData.users allKeys] mutableCopy];
+        NSMutableArray *userIds = [[self.messageDataSource.users allKeys] mutableCopy];
         [userIds removeObject:self.senderId];
         NSString *randomUserId = userIds[arc4random_uniform((int)[userIds count])];
         
@@ -273,7 +292,7 @@
             }
             
             newMessage = [JSQMessage messageWithSenderId:randomUserId
-                                             displayName:self.demoData.users[randomUserId]
+                                             displayName:self.messageDataSource.users[randomUserId]
                                                    media:newMediaData];
         }
         else {
@@ -281,7 +300,7 @@
              *  Last message was a text message
              */
             newMessage = [JSQMessage messageWithSenderId:randomUserId
-                                             displayName:self.demoData.users[randomUserId]
+                                             displayName:self.messageDataSource.users[randomUserId]
                                                     text:copyMessage.text];
         }
         
@@ -293,7 +312,7 @@
          *  3. Call `finishReceivingMessage`
          */
         [JSQSystemSoundPlayer jsq_playMessageReceivedSound];
-        [self.demoData.messages addObject:newMessage];
+        [self.messageDataSource.messages addObject:newMessage];
         [self finishReceivingMessageAnimated:YES];
         
         
@@ -340,8 +359,6 @@
 }
 
 
-
-
 #pragma mark - JSQMessagesViewController method overrides
 
 - (void)didPressSendButton:(UIButton *)button
@@ -375,10 +392,9 @@
                                                           date:date
                                                           text:text];
     
-    [self.demoData.messages addObject:message];
+    [self.messageDataSource.messages addObject:message];
     
     NSLog(@"sending sendername=%@, sendid=%@, msg=%@", message.senderDisplayName, message.senderId, message.text);
-    NSLog(@"didPressSendButton");
     
     [self.networkManager sendMessage:message];
     [self finishSendingMessageAnimated:YES];
@@ -386,6 +402,8 @@
 
 - (void)didPressAccessoryButton:(UIButton *)sender
 {
+    NSLog(@"didPressAccessoryButton");
+    
     UIActionSheet *sheet = [[UIActionSheet alloc] initWithTitle:@"Media messages"
                                                        delegate:self
                                               cancelButtonTitle:@"Cancel"
@@ -403,21 +421,21 @@
     
     switch (buttonIndex) {
         case 0:
-            [self.demoData addPhotoMediaMessage];
+            [self.messageDataSource addPhotoMediaMessage];
             break;
             
         case 1:
         {
             __weak UICollectionView *weakView = self.collectionView;
             
-            [self.demoData addLocationMediaMessageCompletion:^{
+            [self.messageDataSource addLocationMediaMessageCompletion:^{
                 [weakView reloadData];
             }];
         }
             break;
             
         case 2:
-            [self.demoData addVideoMediaMessage];
+            [self.messageDataSource addVideoMediaMessage];
             break;
     }
     
@@ -432,7 +450,7 @@
 
 - (id<JSQMessageData>)collectionView:(JSQMessagesCollectionView *)collectionView messageDataForItemAtIndexPath:(NSIndexPath *)indexPath
 {
-    return [self.demoData.messages objectAtIndex:indexPath.item];
+    return [self.messageDataSource.messages objectAtIndex:indexPath.item];
 }
 
 - (id<JSQMessageBubbleImageDataSource>)collectionView:(JSQMessagesCollectionView *)collectionView messageBubbleImageDataForItemAtIndexPath:(NSIndexPath *)indexPath
@@ -444,13 +462,13 @@
      *  Otherwise, return your previously created bubble image data objects.
      */
     
-    JSQMessage *message = [self.demoData.messages objectAtIndex:indexPath.item];
+    JSQMessage *message = [self.messageDataSource.messages objectAtIndex:indexPath.item];
     
     if ([message.senderId isEqualToString:self.senderId]) {
-        return self.demoData.outgoingBubbleImageData;
+        return self.messageDataSource.outgoingBubbleImageData;
     }
     
-    return self.demoData.incomingBubbleImageData;
+    return self.messageDataSource.incomingBubbleImageData;
 }
 
 - (id<JSQMessageAvatarImageDataSource>)collectionView:(JSQMessagesCollectionView *)collectionView avatarImageDataForItemAtIndexPath:(NSIndexPath *)indexPath
@@ -475,7 +493,7 @@
      *
      *  Override the defaults in `viewDidLoad`
      */
-    JSQMessage *message = [self.demoData.messages objectAtIndex:indexPath.item];
+    JSQMessage *message = [self.messageDataSource.messages objectAtIndex:indexPath.item];
     
     if ([message.senderId isEqualToString:self.senderId]) {
         if (![NSUserDefaults outgoingAvatarSetting]) {
@@ -489,7 +507,7 @@
     }
     
     
-    return [self.demoData.avatars objectForKey:message.senderId];
+    return [self.messageDataSource.avatars objectForKey:message.senderId];
 }
 
 - (NSAttributedString *)collectionView:(JSQMessagesCollectionView *)collectionView attributedTextForCellTopLabelAtIndexPath:(NSIndexPath *)indexPath
@@ -501,7 +519,7 @@
      *  Show a timestamp for every 3rd message
      */
     if (indexPath.item % 3 == 0) {
-        JSQMessage *message = [self.demoData.messages objectAtIndex:indexPath.item];
+        JSQMessage *message = [self.messageDataSource.messages objectAtIndex:indexPath.item];
         return [[JSQMessagesTimestampFormatter sharedFormatter] attributedTimestampForDate:message.date];
     }
     
@@ -510,7 +528,7 @@
 
 - (NSAttributedString *)collectionView:(JSQMessagesCollectionView *)collectionView attributedTextForMessageBubbleTopLabelAtIndexPath:(NSIndexPath *)indexPath
 {
-    JSQMessage *message = [self.demoData.messages objectAtIndex:indexPath.item];
+    JSQMessage *message = [self.messageDataSource.messages objectAtIndex:indexPath.item];
     
     /**
      *  iOS7-style sender name labels
@@ -520,7 +538,7 @@
     }
     
     if (indexPath.item - 1 > 0) {
-        JSQMessage *previousMessage = [self.demoData.messages objectAtIndex:indexPath.item - 1];
+        JSQMessage *previousMessage = [self.messageDataSource.messages objectAtIndex:indexPath.item - 1];
         if ([[previousMessage senderId] isEqualToString:message.senderId]) {
             return nil;
         }
@@ -541,7 +559,7 @@
 
 - (NSInteger)collectionView:(UICollectionView *)collectionView numberOfItemsInSection:(NSInteger)section
 {
-    return [self.demoData.messages count];
+    return [self.messageDataSource.messages count];
 }
 
 - (UICollectionViewCell *)collectionView:(JSQMessagesCollectionView *)collectionView cellForItemAtIndexPath:(NSIndexPath *)indexPath
@@ -565,7 +583,7 @@
      *  Instead, override the properties you want on `self.collectionView.collectionViewLayout` from `viewDidLoad`
      */
     
-    JSQMessage *msg = [self.demoData.messages objectAtIndex:indexPath.item];
+    JSQMessage *msg = [self.messageDataSource.messages objectAtIndex:indexPath.item];
     
     if (!msg.isMediaMessage) {
         
@@ -615,13 +633,13 @@
     /**
      *  iOS7-style sender name labels
      */
-    JSQMessage *currentMessage = [self.demoData.messages objectAtIndex:indexPath.item];
+    JSQMessage *currentMessage = [self.messageDataSource.messages objectAtIndex:indexPath.item];
     if ([[currentMessage senderId] isEqualToString:self.senderId]) {
         return 0.0f;
     }
     
     if (indexPath.item - 1 > 0) {
-        JSQMessage *previousMessage = [self.demoData.messages objectAtIndex:indexPath.item - 1];
+        JSQMessage *previousMessage = [self.messageDataSource.messages objectAtIndex:indexPath.item - 1];
         if ([[previousMessage senderId] isEqualToString:[currentMessage senderId]]) {
             return 0.0f;
         }

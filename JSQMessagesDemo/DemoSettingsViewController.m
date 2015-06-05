@@ -29,6 +29,16 @@
 
 @implementation DemoSettingsViewController
 
+- (id)init
+{
+    self = [super init];
+    if (self) {
+        self.title = NSLocalizedString(@"Setting", @"Setting");
+        self.tabBarItem.image = [UIImage imageNamed:@"first"];
+    }
+    return self;
+}
+
 - (void)viewDidLoad
 {
     [super viewDidLoad];

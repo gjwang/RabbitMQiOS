@@ -19,6 +19,7 @@
 #import <Foundation/Foundation.h>
 #import <UIKit/UIKit.h>
 
+#import "DemoModelData.h"
 #import "DemoMessagesViewController.h"
 #import "NetworkManager.h"
 
@@ -26,5 +27,8 @@
 
 - (IBAction)unwindSegue:(UIStoryboardSegue *)sender;
 
+@property (strong, nonatomic) DemoModelData *demoData;
 @property (weak, nonatomic) NetworkManager *networkManager;
+@property (strong, nonatomic) UITabBarController *tabBarController;
+
 @end
