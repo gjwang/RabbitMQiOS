@@ -300,11 +300,13 @@ failed:
     return retString;
 }
 
-- (void) sendMessage: (JSQMessage *)msg
+- (void) sendMessage: (RBTMessage *)msg
 {
     //TODO: 1. store msg in a queue
     
     //not thread safe
+    
+    //NSLog(@"RBConnection sendMessage");
     
     const amqp_connection_state_t conn = self.conn;
     char const *exchange = "amq.direct";
@@ -316,10 +318,12 @@ failed:
     props.delivery_mode = 2; // persistent delivery mode
     
     if (self.rbConnStatus == RBConnLogSuccess && conn != NULL) {
-        //char const *routingkey = [msg.senderToId UTF8String];
-        char const *sendTo = sendToId;
-        char const *routingkey = sendTo;
+        char const *routingkey = [msg.sendToId UTF8String];
+        //char const *sendTo = sendToId;
+        //char const *routingkey = sendTo;
         char const *messagebody = [msg.text UTF8String];
+        
+        NSLog(@"publish routingkey = %s", routingkey);
         
         //basic.publish is an async method
         amqp_status_enum responseStatus = amqp_basic_publish(conn,

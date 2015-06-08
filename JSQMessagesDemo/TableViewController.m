@@ -148,7 +148,7 @@
     if ([segue.identifier isEqualToString:@"seguePushDemoVC"]) {
         
         DemoMessagesViewController *msgViewController = segue.destinationViewController;
-        msgViewController.senderName = sender;
+        msgViewController.sendToName = sender;
     }
 }
 

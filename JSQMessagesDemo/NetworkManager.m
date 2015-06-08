@@ -118,7 +118,7 @@
     
 }
 
-- (void) sendMessage: (JSQMessage *)msg
+- (void) sendMessage: (RBTMessage *)msg
 {
     //not thread safe
     @synchronized(self) {

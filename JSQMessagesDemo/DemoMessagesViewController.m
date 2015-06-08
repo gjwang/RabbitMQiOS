@@ -18,7 +18,6 @@
 
 #import "DemoMessagesViewController.h"
 #import "MessageDataSource.h"
-//#import "DemoModelData.h"
 
 @implementation DemoMessagesViewController
 
@@ -34,11 +33,11 @@
     return self;
 }
 
-/*
-- (void) setSenderName: (NSString *)senderName{
-    _senderName = senderName;
+
+- (void) setSendToName:(NSString *)sendToName{
+    _sendToName = sendToName;
 }
-*/
+
 
 /**
  *  Override point for customization.
@@ -54,12 +53,19 @@
     [super viewDidLoad];
     
     //NSLog(@"senderName =%@", _senderName);
-    self.title = _senderName;
+    self.title = _sendToName;
     
     /**
      *  Load up our fake data for the demo
      */
-    self.messageDataSource = [[MessageDataSource alloc] init:_senderName];
+    
+    self.networkManager = [NetworkManager shareNetworkManager];
+    self.messageDataSource = [[MessageDataSource alloc] init:_sendToName];
+    
+    _sendToId = [[self.messageDataSource.users allKeysForObject:_sendToName] objectAtIndex:0];
+    
+    //NSLog(@"_sendToName=%@, _sendToId=%@", _sendToName, _sendToId);
+
     
     /**
      *  You MUST set your senderId and display name
@@ -387,16 +393,19 @@
      */
     [JSQSystemSoundPlayer jsq_playMessageSentSound];
     
-    JSQMessage *message = [[JSQMessage alloc] initWithSenderId:senderId
-                                             senderDisplayName:senderDisplayName
-                                                          date:date
-                                                          text:text];
+    RBTMessage *msg = [[RBTMessage alloc] initWithSenderId:senderId
+                                         senderDisplayName:senderDisplayName
+                                                  sendToId:_sendToId
+                                                sendToName:_sendToName
+                                                      date:date
+                                                      text:text];
     
-    [self.messageDataSource.messages addObject:message];
+    [self.messageDataSource.messages addObject:msg];
     
-    NSLog(@"sending sendername=%@, sendid=%@, msg=%@", message.senderDisplayName, message.senderId, message.text);
+    NSLog(@"fromN=%@, fromId=%@, toN=%@, toId=%@, msg=%@", msg.senderDisplayName, msg.senderId,
+                                                           msg.sendToName, msg.sendToId, msg.text);
     
-    [self.networkManager sendMessage:message];
+    [self.networkManager sendMessage:msg];
     [self finishSendingMessageAnimated:YES];
 }
 
