@@ -147,7 +147,7 @@
     
     if ([segue.identifier isEqualToString:@"seguePushDemoVC"]) {
         
-        DemoMessagesViewController *msgViewController = segue.destinationViewController;
+        ChatMessagesViewController *msgViewController = segue.destinationViewController;
         msgViewController.sendToName = sender;
     }
 }
@@ -156,7 +156,7 @@
 
 #pragma mark - Demo delegate
 
-- (void)didDismissJSQDemoViewController:(DemoMessagesViewController *)vc
+- (void)didDismissJSQDemoViewController:(ChatMessagesViewController *)vc
 {
     [self dismissViewControllerAnimated:YES completion:nil];
 }

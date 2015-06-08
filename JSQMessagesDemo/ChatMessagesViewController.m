@@ -16,10 +16,10 @@
 //  Released under an MIT license: http://opensource.org/licenses/MIT
 //
 
-#import "DemoMessagesViewController.h"
+#import "ChatMessagesViewController.h"
 #import "MessageDataSource.h"
 
-@implementation DemoMessagesViewController
+@implementation ChatMessagesViewController
 
 #pragma mark - View lifecycle
 
@@ -156,7 +156,7 @@
                                               queue:mainQueue
                                          usingBlock:^(NSNotification *note) {
                                              //NSLog(@"recv Msg notification=%@", note.name);
-                                             NSLog(@"recv msg=%@", note.userInfo[@"RecvMsg"]);
+                                             //NSLog(@"recv msg=%@", note.userInfo[@"RecvMsg"]);
                                              
                                              [weakSelf updateUI:note.userInfo[@"RecvMsg"]];
                                          }

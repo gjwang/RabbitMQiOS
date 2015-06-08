@@ -26,18 +26,18 @@
 #import "NetworkManager.h"
 
 
-@class DemoMessagesViewController;
+@class ChatMessagesViewController;
 
 @protocol JSQDemoViewControllerDelegate <NSObject>
 
-- (void)didDismissJSQDemoViewController:(DemoMessagesViewController *)vc;
+- (void)didDismissJSQDemoViewController:(ChatMessagesViewController *)vc;
 
 @end
 
 
 
 
-@interface DemoMessagesViewController : JSQMessagesViewController <UIActionSheetDelegate>
+@interface ChatMessagesViewController : JSQMessagesViewController <UIActionSheetDelegate>
 
 @property (weak, nonatomic) id<JSQDemoViewControllerDelegate> delegateModal;
 

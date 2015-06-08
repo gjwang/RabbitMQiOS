@@ -292,10 +292,10 @@
             </objects>
             <point key="canvasLocation" x="-2409" y="619"/>
         </scene>
-        <!--Demo Messages View Controller-->
+        <!--Chat Messages View Controller-->
         <scene sceneID="gOX-cv-CuN">
             <objects>
-                <viewController storyboardIdentifier="DemoVC" id="JdJ-0X-ZL8" customClass="DemoMessagesViewController" sceneMemberID="viewController">
+                <viewController storyboardIdentifier="DemoVC" id="JdJ-0X-ZL8" customClass="ChatMessagesViewController" sceneMemberID="viewController">
                     <layoutGuides>
                         <viewControllerLayoutGuide type="top" id="TE8-r2-pE8"/>
                         <viewControllerLayoutGuide type="bottom" id="H2n-HB-Ssl"/>
@@ -326,10 +326,10 @@
             </objects>
             <point key="canvasLocation" x="-3413" y="274"/>
         </scene>
-        <!--Demo Messages View Controller-->
+        <!--Chat Messages View Controller-->
         <scene sceneID="Rr5-W8-Xyh">
             <objects>
-                <viewController id="2Qx-iu-03V" customClass="DemoMessagesViewController" sceneMemberID="viewController">
+                <viewController id="2Qx-iu-03V" customClass="ChatMessagesViewController" sceneMemberID="viewController">
                     <layoutGuides>
                         <viewControllerLayoutGuide type="top" id="hTc-sT-can"/>
                         <viewControllerLayoutGuide type="bottom" id="BPF-eU-3uQ"/>

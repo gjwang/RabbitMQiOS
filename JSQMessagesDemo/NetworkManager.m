@@ -115,7 +115,7 @@
                                                       object:nil
                                                        queue:mainQueue
                                                   usingBlock:^(NSNotification *note) {
-                                                NSLog(@"recv msg=%@", note.userInfo[@"RecvMsg"]);
+                                                //NSLog(@"notify recv msg=%@", note.userInfo[@"RecvMsg"]);
                                                 [weakSelf dispatchRecvMsg:note.userInfo[@"RecvMsg"]];
                                                   }
                         ];

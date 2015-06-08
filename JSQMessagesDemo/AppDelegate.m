@@ -20,7 +20,7 @@
 
 #import "NSUserDefaults+DemoSettings.h"
 //#import "DemoSettingsViewController.h"
-//#import "DemoMessagesViewController.h"
+//#import "ChatMessagesViewController.h"
 //#import "TableViewController.h"
 
 @implementation AppDelegate
@@ -35,7 +35,7 @@
     self.window = [[UIWindow alloc] initWithFrame:[[UIScreen mainScreen] bounds]];
     // Override point for customization after application launch.
     UIViewController *settingViewController = [[DemoSettingsViewController alloc] init];
-    UIViewController *jsqMsgViewController = [[DemoMessagesViewController alloc] init];
+    UIViewController *jsqMsgViewController = [[ChatMessagesViewController alloc] init];
     UIViewController *tableViewConntroller = [[TableViewController alloc] init];
     
     self.tabBarController = [[UITabBarController alloc] init];

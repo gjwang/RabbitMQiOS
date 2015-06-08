@@ -20,7 +20,7 @@
 #import <UIKit/UIKit.h>
 
 #import "DemoModelData.h"
-#import "DemoMessagesViewController.h"
+#import "ChatMessagesViewController.h"
 #import "NetworkManager.h"
 
 @interface TableViewController : UITableViewController <JSQDemoViewControllerDelegate>
