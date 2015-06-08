@@ -8,20 +8,12 @@
 
 #import <UIKit/UIKit.h>
 #import "amqp_tcp_socket.h"
-#import "JSQMessage.h"
+#import "RBTMessage.h"
 
 static char * const rabbit_hostname = "localhost";
 static char * const login_rabbit_username = "test";
 static char * const login_rabbit_password = "test";
 static int    const rabbit_port = 5672;
-
-#if 1
-static char * const sendFromId = "pythonguy";
-static char * const sendToId = "gjwang_ip6p";
-#else
-static char * const sendFromId = "gjwang_ip6p";
-static char * const sendToId = "pythonguy";
-#endif
 
 
 extern NSString * const RBRecvMsgNotification;
@@ -43,8 +35,10 @@ typedef enum: NSUInteger {
 //@property (strong, nonatomic) NSString *routingkey;
 @property (readwrite, nonatomic) char *username;
 @property (readwrite, nonatomic) char *password;
+@property (readonly, nonatomic, copy) NSString *receiveFromId;
 @property (readwrite, nonatomic) RBConnStatus rbConnStatus;
 
+- (instancetype)initWithReiverId: (NSString*) receiverId;
 - (RBConnStatus)login;
 - (RBConnStatus) loginAsync;
 - (void)sendMessage: (JSQMessage *)msg;

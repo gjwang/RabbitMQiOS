@@ -47,13 +47,15 @@
     
     if (self) {
         if ([NSUserDefaults emptyMessagesSetting]) {
-            self.messages = [NSMutableArray new];
-        }
-        else {
+            _messages = [NSMutableArray new];
+        }else {
             NSLog(@"DemoModelData init loadFakeMessages");
 
             [self loadFakeMessages];
         }
+        
+        _myselfId = kJSQDemoAvatarIdSquires;
+        _myselfName = kJSQDemoAvatarDisplayNameSquires;
         
         
         /**

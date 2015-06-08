@@ -14,6 +14,7 @@
 @interface NetworkManager : NSObject
 
 @property (readwrite, nonatomic) BOOL isNetworkReachable;
+@property(readwrite, nonatomic, copy) NSString *receiverId;//comsume msg from receiverId
 
 - (void)sendMessage:(JSQMessage *)msg;
 

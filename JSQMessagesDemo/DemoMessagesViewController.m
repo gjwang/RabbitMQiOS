@@ -23,6 +23,7 @@
 
 #pragma mark - View lifecycle
 
+/*
 - (id)init
 {
     self = [super init];
@@ -32,7 +33,7 @@
     }
     return self;
 }
-
+*/
 
 - (void) setSendToName:(NSString *)sendToName{
     _sendToName = sendToName;
@@ -181,6 +182,8 @@
      */
     NSMutableArray *userIds = [[self.messageDataSource.users allKeys] mutableCopy];
     [userIds removeObject:self.senderId];
+    
+    //TODO: get the senderId
     NSString *randomUserId = userIds[arc4random_uniform((int)[userIds count])];
         
     JSQMessage *newMessage = nil;

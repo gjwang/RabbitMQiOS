@@ -45,7 +45,7 @@
     [super viewDidLoad];
     self.title = @"History";
     
-    self.demoData = [[DemoModelData alloc] init];
+    self.demoData = [DemoModelData shareDemoDodelData];
     
     userNumber = [self.demoData.users count];
     userNamesArray = [self.demoData.users allValues];

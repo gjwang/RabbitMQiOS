@@ -33,10 +33,9 @@
             NSLog(@"MessageDataSource init loadFakeMessages");
         }
         
-        self.myselfId = kJSQDemoAvatarIdSquires;
-        self.myselfName = kJSQDemoAvatarDisplayNameSquires;
-        
         DemoModelData *modelData = [DemoModelData shareDemoDodelData];
+        self.myselfId = modelData.myselfId;
+        self.myselfName = modelData.myselfName;
         
         for (JSQMessage *msg in modelData.messages) {
             if ([msg.senderDisplayName isEqualToString:self.myselfName]

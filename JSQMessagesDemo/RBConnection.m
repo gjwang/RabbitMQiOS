@@ -25,12 +25,15 @@ NSString * const RBLoginFailedNotification = @"RBLoginFailedNotification";
 @implementation RBConnection
 
 
-- (instancetype)init{
+- (instancetype)initWithReiverId: (NSString*) receiverId{
+    NSParameterAssert(receiverId != nil);
+    
     self = [super init];
     if (self) {
         _conn = NULL;
         _retry_times = 0;
         _rbConnStatus = RBConnLogout;
+        _receiveFromId = receiverId;
     }
     return self;
 }
@@ -89,7 +92,8 @@ NSString * const RBLoginFailedNotification = @"RBLoginFailedNotification";
     }
     
     self.conn = conn;
-    if ([RBConnection bindRecvRabbitMq:conn]) {
+    if ([RBConnection bindRecvRabbitMq:conn
+                         receiveFromId:self.receiveFromId]) {
         NSLog(@"loggin Success");
         //TODO: fire a notification to begin consuming msg
         
@@ -151,7 +155,8 @@ failed:
                         
                         if (AMQP_RESPONSE_NORMAL == res.reply_type) {
                             RBConnStatus rbConnStatus;
-                            if ([RBConnection bindRecvRabbitMq:conn]) {
+                            if ([RBConnection bindRecvRabbitMq:conn
+                                                 receiveFromId:self.receiveFromId]) {
                                 NSLog(@"bindRecvRabbitMq Success");
                                 //TODO: fire a notification to begin consuming msg, or KVO
                                 rbConnStatus = RBConnLogSuccess;
@@ -218,12 +223,14 @@ failed:
 }
 
 + (BOOL) bindRecvRabbitMq:(amqp_connection_state_t) conn
+            receiveFromId:(NSString *)receiveFromId
 {
+    NSParameterAssert(receiveFromId != nil);
+    NSLog(@"receiveFromId %@", receiveFromId);
+    
+    char const *bindingkey = [receiveFromId UTF8String];
     char const *exchange = "amq.direct";
     
-    char const * selfId = sendFromId;
-    char const *recvRoutingkey = selfId;
-    char const *bindingkey = recvRoutingkey;
     
     if (conn != NULL) {
         amqp_channel_t const channel = 1;

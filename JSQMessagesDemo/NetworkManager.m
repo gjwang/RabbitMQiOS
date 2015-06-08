@@ -11,6 +11,7 @@
 #import "amqp_tcp_socket.h"
 #import "Reachability.h"
 #import "RBConnection.h"
+#import "DemoModelData.h"
 
 @interface NetworkManager()
 @property (strong, readwrite, atomic) RBConnection* rbConn;
@@ -24,18 +25,22 @@
     
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
-        _shareNetworkManager = [[NetworkManager alloc] init];
+        NSString *receiverId = [DemoModelData shareDemoDodelData].myselfId;
+        _shareNetworkManager = [[NetworkManager alloc] initWithReceiverId:receiverId];
     });
     
     return _shareNetworkManager;
 }
 
-- (instancetype) init{
+- (instancetype) initWithReceiverId:(NSString *)receiverId{
+    NSParameterAssert(receiverId != nil);
+    
     //maybe use singleton
     self = [super init];
     if (self){
-        self.rbConn = nil;
-        self.isNetworkReachable = NO;//network status is Unknown actully;
+        _rbConn = nil;
+        _isNetworkReachable = NO;//network status is Unknown actully;
+        _receiverId = receiverId;
         
         [self networkReachability];
         [self registerRecvMsgObserver];
@@ -66,7 +71,7 @@
     [self closeConn];
     
     @synchronized(self) {
-        self.rbConn = [[RBConnection alloc] init];
+        self.rbConn = [[RBConnection alloc] initWithReiverId:self.receiverId];
         return [self.rbConn login];
     }
 }
@@ -88,7 +93,7 @@
         [self closeConn];
         
         NSLog(@"startConnetionAsync start a new connetion");
-        self.rbConn = [[RBConnection alloc] init];
+        self.rbConn = [[RBConnection alloc] initWithReiverId:self.receiverId];
         
         [self.rbConn loginAsync];
     }

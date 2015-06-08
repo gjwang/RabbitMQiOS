@@ -21,8 +21,8 @@
 
 @interface MessageDataSource : NSObject
 
-@property (strong, nonatomic)NSString *myselfId;
-@property (strong, nonatomic)NSString *myselfName;
+@property (nonatomic, readwrite, copy)NSString *myselfId;
+@property (nonatomic, readwrite, copy)NSString *myselfName;
 
 @property (strong, nonatomic) NSDictionary *avatars;
 @property (strong, nonatomic) NSDictionary *users;
